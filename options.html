@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: system-ui, sans-serif; color: black; background: white; padding: 15px; width: 320px; box-sizing: border-box; margin: 0; }
+    h3 { margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid black; padding-bottom: 5px; }
+    .setting-group { margin-bottom: 18px; }
+    label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 0.95em; }
+    .checkbox-label { font-weight: normal; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    input[type="text"] { width: 100%; padding: 6px; box-sizing: border-box; border: 1px solid black; }
+    button { background: white; color: black; border: 2px solid black; padding: 8px 15px; cursor: pointer; font-weight: bold; width: 100%; }
+    button:hover { background: black; color: white; }
+    #quickBookmarkBtn { background: black; color: white; margin-bottom: 5px; }
+    #quickBookmarkBtn:hover { background: #333; }
+    .note { font-size: 0.8em; color: #555; margin-top: 4px; display: block; }
+    #status { margin-top: 10px; font-weight: bold; height: 15px; font-size: 0.85em; text-align: center; color: green; }
+    hr { border: 0; border-top: 1px solid #ccc; margin: 15px 0; }
+    .footer-links { text-align: center; font-size: 0.8em; margin-top: 10px; }
+    .footer-links a { color: black; text-decoration: underline; margin: 0 5px; }
+  </style>
+</head>
+<body>
+  <h3>YT Timestamp Bookmarker</h3>
+  
+  <div class="setting-group">
+    <button id="quickBookmarkBtn">⚡ Bookmark Current Time</button>
+    <span class="note" style="text-align: center;">Hotkey shortcut: <b>Alt+Shift+S</b></span>
+  </div>
+
+  <hr>
+
+  <div class="setting-group">
+    <label class="checkbox-label">
+      <input type="checkbox" id="replaceExisting">
+      Replace existing bookmark for video
+    </label>
+  </div>
+
+  <div class="setting-group">
+    <label for="titlePattern">Bookmark Title Pattern:</label>
+    <input type="text" id="titlePattern" placeholder="e.g., {title} [{time}]">
+    <span class="note">Variables: <b>{title}</b>, <b>{time}</b></span>
+  </div>
+
+  <button id="saveBtn">Save Preferences</button>
+  <div id="status"></div>
+
+  <hr>
+  <div class="footer-links">
+    <a href="https://github.com/Wegez/yt-timestamped-bookmarks/issues" target="_blank">Report Bug</a> | 
+    <a href="https://github.com/Wegez/yt-timestamped-bookmarks" target="_blank">Source Code</a>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
