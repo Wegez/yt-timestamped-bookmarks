@@ -98,12 +98,15 @@ async function handleBookmark(tab, timeInSeconds, defaultTitle) {
   const searchResults = await chrome.bookmarks.search({});
   const existingBookmarks = searchResults.filter(bm => bm.url && bm.url.includes(`youtube.com/watch`) && bm.url.includes(`v=${videoId}`));
 
+  let notificationMessage = "";
+
   if (prefs.replaceExisting && existingBookmarks.length > 0) {
     // Update the existing bookmark
     await chrome.bookmarks.update(existingBookmarks[0].id, {
       title: finalTitle,
       url: newUrl
     });
+    notificationMessage = "Bookmark updated!";
   } else {
     // Create new bookmark in the Firefox Bookmark Toolbar ('toolbar_____')
     await chrome.bookmarks.create({
@@ -111,7 +114,49 @@ async function handleBookmark(tab, timeInSeconds, defaultTitle) {
       title: finalTitle,
       url: newUrl
     });
+    notificationMessage = "Bookmark created!";
   }
+
+  // Inject a visual toast notification directly into the YouTube page
+  await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: (message) => {
+      // Create the popup element
+      const toast = document.createElement('div');
+      toast.textContent = message;
+      
+      // Style it to look like a modern, dark-mode friendly notification
+      Object.assign(toast.style, {
+        position: 'fixed',
+        bottom: '24px',
+        left: '24px', // Placed on the left to avoid interfering with YouTube's miniplayer/UI
+        backgroundColor: '#282828',
+        color: '#ffffff',
+        padding: '12px 24px',
+        borderRadius: '8px',
+        fontSize: '14px',
+        fontFamily: 'Roboto, Arial, sans-serif',
+        fontWeight: '500',
+        zIndex: '9999999',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+        opacity: '0',
+        transition: 'opacity 0.3s ease-in-out',
+        pointerEvents: 'none' // Prevents it from blocking clicks beneath it
+      });
+
+      document.body.appendChild(toast);
+      
+      // Fade in
+      setTimeout(() => { toast.style.opacity = '1'; }, 10);
+      
+      // Fade out and remove from DOM after 3 seconds
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => { toast.remove(); }, 300);
+      }, 3000);
+    },
+    args: [notificationMessage]
+  });
 }
 
 function formatTime(seconds) {
