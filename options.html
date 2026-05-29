@@ -8,12 +8,15 @@
     .setting-group { margin-bottom: 18px; }
     label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 0.95em; }
     .checkbox-label { font-weight: normal; display: flex; align-items: center; gap: 8px; cursor: pointer; }
-    input[type="text"] { width: 100%; padding: 6px; box-sizing: border-box; border: 1px solid black; }
+    input[type="text"], select { width: 100%; padding: 6px; box-sizing: border-box; border: 1px solid black; }
     button { background: white; color: black; border: 2px solid black; padding: 8px 15px; cursor: pointer; font-weight: bold; width: 100%; }
     button:hover { background: black; color: white; }
     #quickBookmarkBtn { background: black; color: white; margin-bottom: 5px; }
     #quickBookmarkBtn:hover { background: #333; }
     .note { font-size: 0.8em; color: #555; margin-top: 4px; display: block; }
+    .shortcut-link { display: block; text-align: center; margin-top: 8px; font-size: 0.8em; }
+    .shortcut-link a { color: #0055cc; text-decoration: none; }
+    .shortcut-link a:hover { text-decoration: underline; }
     #status { margin-top: 10px; font-weight: bold; height: 15px; font-size: 0.85em; text-align: center; color: green; }
     hr { border: 0; border-top: 1px solid #ccc; margin: 15px 0; }
     .footer-links { text-align: center; font-size: 0.8em; margin-top: 10px; }
@@ -21,14 +24,25 @@
   </style>
 </head>
 <body>
-  <h3>YT Timestamp Bookmarker</h3>
+  <h3>YouTube Timestamped Bookmarks</h3>
   
   <div class="setting-group">
-    <button id="quickBookmarkBtn">⚡ Bookmark Current Time</button>
+    <button id="quickBookmarkBtn">Bookmark Current Time</button>
     <span class="note" style="text-align: center;">Hotkey shortcut: <b>Alt+Shift+S</b></span>
+    <span class="shortcut-link">
+      <a href="#" id="manageShortcutsLink">To change shortcut, click here to open the Firefox Add-ons manager (Gear Icon ⚙️ > Manage Extension Shortcuts)</a>
+    </span>
   </div>
 
   <hr>
+
+  <div class="setting-group">
+    <label for="iconAction">Icon Click Behavior:</label>
+    <select id="iconAction">
+      <option value="bookmark">Create Bookmark (Default)</option>
+      <option value="menu">Open Options Menu</option>
+    </select>
+  </div>
 
   <div class="setting-group">
     <label class="checkbox-label">

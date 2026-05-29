@@ -1,3 +1,32 @@
+// --- DYNAMIC ICON BEHAVIOR SETUP ---
+// Set popup state based on preference when the background script wakes up
+chrome.storage.sync.get({ iconAction: 'bookmark' }).then(prefs => {
+  if (prefs.iconAction === 'menu') {
+    chrome.action.setPopup({ popup: 'options.html' });
+  } else {
+    chrome.action.setPopup({ popup: '' });
+  }
+});
+
+// Listen for live preference changes to update the click behavior immediately
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'sync' && changes.iconAction) {
+    if (changes.iconAction.newValue === 'menu') {
+      chrome.action.setPopup({ popup: 'options.html' });
+    } else {
+      chrome.action.setPopup({ popup: '' });
+    }
+  }
+});
+
+// Listen for clicks on the extension icon 
+// (This event ONLY fires when the popup is set to empty string '')
+chrome.action.onClicked.addListener((tab) => {
+  triggerBookmark();
+});
+
+// --- EXISTING LISTENERS ---
+
 // Listen for keyboard shortcut (Alt+Shift+S)
 chrome.commands.onCommand.addListener((command) => {
   if (command === 'bookmark_video') {
@@ -11,6 +40,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     triggerBookmark();
   }
 });
+
+// --- CORE BOOKMARK LOGIC ---
 
 async function triggerBookmark() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "YT Timestamp Bookmarker",
+  "name": "YouTube Timestamped Bookmarks",
   "version": "1.0",
   "description": "Bookmarks the current YouTube video with a timestamp.",
   "permissions": [
@@ -37,7 +37,10 @@
     }
   },
   "action": {
-    "default_title": "YT Timestamp Bookmarker Menu",
-    "default_popup": "options.html"
+    "default_title": "YouTube Timestamped Bookmarks"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
   }
 }
