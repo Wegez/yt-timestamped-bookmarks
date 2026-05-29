@@ -1,42 +1,46 @@
+const $ = id => document.getElementById(id);
+
 document.addEventListener('DOMContentLoaded', restoreOptions);
-document.getElementById('saveBtn').addEventListener('click', saveOptions);
-document.getElementById('quickBookmarkBtn').addEventListener('click', executeQuickBookmark);
-document.getElementById('manageShortcutsLink').addEventListener('click', openAddonsManager);
+$('saveBtn').addEventListener('click', saveOptions);
+$('truncateType').addEventListener('change', toggleTruncateUI);
 
-function executeQuickBookmark() {
+$('quickBookmarkBtn').addEventListener('click', () => {
   chrome.runtime.sendMessage({ action: 'trigger_bookmark_now' });
-  window.close(); // Closes the floating panel automatically upon click
-}
+  window.close();
+});
 
-function openAddonsManager(e) {
+$('manageShortcutsLink').addEventListener('click', (e) => {
   e.preventDefault();
   chrome.tabs.create({ url: 'about:addons' });
+});
+
+function toggleTruncateUI() {
+  $('truncateLengthGroup').style.display = $('truncateType').value === 'none' ? 'none' : 'block';
 }
 
 function saveOptions() {
-  const replace = document.getElementById('replaceExisting').checked;
-  const pattern = document.getElementById('titlePattern').value || '{title}';
-  const iconAction = document.getElementById('iconAction').value;
-
   chrome.storage.sync.set({
-    replaceExisting: replace,
-    titlePattern: pattern,
-    iconAction: iconAction
+    replaceExisting: $('replaceExisting').checked,
+    titlePattern: $('titlePattern').value || '{title} [{time}]',
+    iconAction: $('iconAction').value,
+    truncateType: $('truncateType').value,
+    truncateLength: parseInt($('truncateLength').value, 10) || 50
   }, () => {
-    const status = document.getElementById('status');
-    status.textContent = 'Preferences saved!';
-    setTimeout(() => { status.textContent = ''; }, 2000);
+    $('status').textContent = 'Preferences saved!';
+    setTimeout(() => $('status').textContent = '', 2000);
   });
 }
 
 function restoreOptions() {
   chrome.storage.sync.get({
-    replaceExisting: true,
-    titlePattern: '{title}',
-    iconAction: 'bookmark'
+    replaceExisting: true, titlePattern: '{title} [{time}]',
+    iconAction: 'menu', truncateType: 'none', truncateLength: 50
   }, (items) => {
-    document.getElementById('replaceExisting').checked = items.replaceExisting;
-    document.getElementById('titlePattern').value = items.titlePattern;
-    document.getElementById('iconAction').value = items.iconAction;
+    $('replaceExisting').checked = items.replaceExisting;
+    $('titlePattern').value = items.titlePattern;
+    $('iconAction').value = items.iconAction;
+    $('truncateType').value = items.truncateType;
+    $('truncateLength').value = items.truncateLength;
+    toggleTruncateUI();
   });
 }

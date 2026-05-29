@@ -1,170 +1,106 @@
+const updatePopup = (action) => chrome.action.setPopup({ popup: action === 'menu' ? 'options.html' : '' });
+
 // --- DYNAMIC ICON BEHAVIOR SETUP ---
-// Set popup state based on preference when the background script wakes up
-chrome.storage.sync.get({ iconAction: 'bookmark' }).then(prefs => {
-  if (prefs.iconAction === 'menu') {
-    chrome.action.setPopup({ popup: 'options.html' });
-  } else {
-    chrome.action.setPopup({ popup: '' });
-  }
-});
+chrome.storage.sync.get({ iconAction: 'menu' }).then(prefs => updatePopup(prefs.iconAction));
 
-// Listen for live preference changes to update the click behavior immediately
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'sync' && changes.iconAction) {
-    if (changes.iconAction.newValue === 'menu') {
-      chrome.action.setPopup({ popup: 'options.html' });
-    } else {
-      chrome.action.setPopup({ popup: '' });
-    }
-  }
+  if (area === 'sync' && changes.iconAction) updatePopup(changes.iconAction.newValue);
 });
 
-// Listen for clicks on the extension icon 
-// (This event ONLY fires when the popup is set to empty string '')
-chrome.action.onClicked.addListener((tab) => {
-  triggerBookmark();
-});
-
-// --- EXISTING LISTENERS ---
-
-// Listen for keyboard shortcut (Alt+Shift+S)
-chrome.commands.onCommand.addListener((command) => {
-  if (command === 'bookmark_video') {
-    triggerBookmark();
-  }
-});
-
-// Listen for requests from the floating popup menu
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'trigger_bookmark_now') {
-    triggerBookmark();
-  }
-});
+// --- LISTENERS ---
+chrome.action.onClicked.addListener(triggerBookmark);
+chrome.commands.onCommand.addListener(cmd => cmd === 'bookmark_video' && triggerBookmark());
+chrome.runtime.onMessage.addListener(req => req.action === 'trigger_bookmark_now' && triggerBookmark());
 
 // --- CORE BOOKMARK LOGIC ---
-
 async function triggerBookmark() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  
-  if (!tab || !tab.url || !tab.url.includes("youtube.com/watch")) {
-    console.log("Not a YouTube watch page.");
-    return;
-  }
+  if (!tab?.url?.includes("youtube.com/watch")) return;
 
   try {
     const [{ result }] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: () => {
         const video = document.querySelector('video');
-        if (!video) return null;
-        // Clean up standard YT title artifacts like "(2) " notification counts
-        return {
+        return video ? {
           time: Math.floor(video.currentTime),
           title: document.title.replace(/^(\(\d+\)\s)?/, '').replace(' - YouTube', '')
-        };
+        } : null;
       }
     });
 
-    if (result) {
-      handleBookmark(tab, result.time, result.title);
-    }
+    if (result) await handleBookmark(tab, result.time, result.title);
   } catch (e) {
     console.error("Failed to inject script", e);
   }
 }
 
-async function handleBookmark(tab, timeInSeconds, defaultTitle) {
+async function handleBookmark(tab, time, defaultTitle) {
   const urlObj = new URL(tab.url);
   const videoId = urlObj.searchParams.get('v');
   if (!videoId) return;
 
-  // Set the time parameter
-  urlObj.searchParams.set('t', timeInSeconds + 's');
+  urlObj.searchParams.set('t', `${time}s`);
   const newUrl = urlObj.toString();
 
-  // Get user preferences
   const prefs = await chrome.storage.sync.get({
-    replaceExisting: true,
-    titlePattern: '{title}'
+    replaceExisting: true, titlePattern: '{title} [{time}]',
+    truncateType: 'none', truncateLength: 50
   });
 
-  // Format time for Title pattern (HH:MM:SS)
-  const formattedTime = formatTime(timeInSeconds);
-  const finalTitle = prefs.titlePattern
-    .replace('{title}', defaultTitle)
-    .replace('{time}', formattedTime);
+  let title = defaultTitle;
+  const limit = parseInt(prefs.truncateLength, 10) || 50;
 
-  // Find existing bookmarks
-  const searchResults = await chrome.bookmarks.search({});
-  const existingBookmarks = searchResults.filter(bm => bm.url && bm.url.includes(`youtube.com/watch`) && bm.url.includes(`v=${videoId}`));
-
-  let notificationMessage = "";
-
-  if (prefs.replaceExisting && existingBookmarks.length > 0) {
-    // Update the existing bookmark
-    await chrome.bookmarks.update(existingBookmarks[0].id, {
-      title: finalTitle,
-      url: newUrl
-    });
-    notificationMessage = "Bookmark updated!";
-  } else {
-    // Create new bookmark in the Firefox Bookmark Toolbar ('toolbar_____')
-    await chrome.bookmarks.create({
-      parentId: 'toolbar_____', 
-      title: finalTitle,
-      url: newUrl
-    });
-    notificationMessage = "Bookmark created!";
+  if (prefs.truncateType === 'characters' && title.length > limit) {
+    title = `${title.substring(0, limit).trim()}...`;
+  } else if (prefs.truncateType === 'words') {
+    const words = title.split(/\s+/);
+    if (words.length > limit) title = `${words.slice(0, limit).join(" ")}...`;
   }
 
-  // Inject a visual toast notification directly into the YouTube page
-  await chrome.scripting.executeScript({
+  const finalTitle = prefs.titlePattern
+    .replace('{title}', title)
+    .replace('{time}', formatTime(time));
+
+  // Optimization: Search only by videoId instead of fetching all bookmarks
+  const searchResults = await chrome.bookmarks.search(videoId);
+  const existing = searchResults.find(bm => bm.url?.includes(`v=${videoId}`));
+  const isUpdate = prefs.replaceExisting && existing;
+
+  if (isUpdate) {
+    await chrome.bookmarks.update(existing.id, { title: finalTitle, url: newUrl });
+  } else {
+    await chrome.bookmarks.create({ parentId: 'toolbar_____', title: finalTitle, url: newUrl });
+  }
+
+  // Inject visual overlay
+  chrome.scripting.executeScript({
     target: { tabId: tab.id },
-    func: (message) => {
-      // Create the popup element
+    func: (msg) => {
       const toast = document.createElement('div');
-      toast.textContent = message;
+      toast.textContent = msg;
       
-      // Style it to look like a modern, dark-mode friendly notification
       Object.assign(toast.style, {
-        position: 'fixed',
-        bottom: '24px',
-        left: '24px', // Placed on the left to avoid interfering with YouTube's miniplayer/UI
-        backgroundColor: '#282828',
-        color: '#ffffff',
-        padding: '12px 24px',
-        borderRadius: '8px',
-        fontSize: '14px',
-        fontFamily: 'Roboto, Arial, sans-serif',
-        fontWeight: '500',
-        zIndex: '9999999',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
-        opacity: '0',
-        transition: 'opacity 0.3s ease-in-out',
-        pointerEvents: 'none' // Prevents it from blocking clicks beneath it
+        position: 'fixed', top: '60px', left: '50%', transform: 'translateX(-50%)',
+        backgroundColor: '#fff', color: '#000', border: '3px solid black',
+        padding: '15px 30px', fontSize: '18px', fontFamily: 'system-ui, Arial, sans-serif',
+        fontWeight: 'bold', zIndex: '9999999', boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
+        opacity: '0', transition: 'opacity 0.2s ease-in-out', pointerEvents: 'none', textAlign: 'center'
       });
 
       document.body.appendChild(toast);
-      
-      // Fade in
-      setTimeout(() => { toast.style.opacity = '1'; }, 10);
-      
-      // Fade out and remove from DOM after 3 seconds
+      setTimeout(() => toast.style.opacity = '1', 10);
       setTimeout(() => {
         toast.style.opacity = '0';
-        setTimeout(() => { toast.remove(); }, 300);
+        setTimeout(() => toast.remove(), 300);
       }, 3000);
     },
-    args: [notificationMessage]
+    args: [isUpdate ? "Bookmark edited!" : "Bookmark created!"]
   });
 }
 
-function formatTime(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) {
-    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  }
-  return `${m}:${s.toString().padStart(2, '0')}`;
+function formatTime(s) {
+  const pad = n => n.toString().padStart(2, '0');
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
 }

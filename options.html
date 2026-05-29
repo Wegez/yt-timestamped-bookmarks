@@ -8,7 +8,7 @@
     .setting-group { margin-bottom: 18px; }
     label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 0.95em; }
     .checkbox-label { font-weight: normal; display: flex; align-items: center; gap: 8px; cursor: pointer; }
-    input[type="text"], select { width: 100%; padding: 6px; box-sizing: border-box; border: 1px solid black; }
+    input[type="text"], input[type="number"], select { width: 100%; padding: 6px; box-sizing: border-box; border: 1px solid black; }
     button { background: white; color: black; border: 2px solid black; padding: 8px 15px; cursor: pointer; font-weight: bold; width: 100%; }
     button:hover { background: black; color: white; }
     #quickBookmarkBtn { background: black; color: white; margin-bottom: 5px; }
@@ -28,9 +28,9 @@
   
   <div class="setting-group">
     <button id="quickBookmarkBtn">Bookmark Current Time</button>
-    <span class="note" style="text-align: center;">Hotkey shortcut: <b>Alt+Shift+S</b></span>
+    <span class="note" style="text-align: center;">Hotkey shortcut: <b>Alt+Shift+X</b></span>
     <span class="shortcut-link">
-      <a href="#" id="manageShortcutsLink">To change shortcut, click here to open the Firefox Add-ons manager (Gear Icon ⚙️ > Manage Extension Shortcuts)</a>
+      <a href="#" id="manageShortcutsLink">Change shortcut in Add-ons manager</a>
     </span>
   </div>
 
@@ -39,8 +39,8 @@
   <div class="setting-group">
     <label for="iconAction">Icon Click Behavior:</label>
     <select id="iconAction">
-      <option value="bookmark">Create Bookmark (Default)</option>
-      <option value="menu">Open Options Menu</option>
+      <option value="menu">Open Options Menu (Default)</option>
+      <option value="bookmark">Create Bookmark Immediately</option>
     </select>
   </div>
 
@@ -55,6 +55,20 @@
     <label for="titlePattern">Bookmark Title Pattern:</label>
     <input type="text" id="titlePattern" placeholder="e.g., {title} [{time}]">
     <span class="note">Variables: <b>{title}</b>, <b>{time}</b></span>
+  </div>
+
+  <div class="setting-group">
+    <label for="truncateType">Truncate Video Title:</label>
+    <select id="truncateType">
+      <option value="none">Don't Truncate (Default)</option>
+      <option value="characters">By Character Count</option>
+      <option value="words">By Word Count</option>
+    </select>
+  </div>
+
+  <div class="setting-group" id="truncateLengthGroup" style="display: none;">
+    <label for="truncateLength">Maximum Limit:</label>
+    <input type="number" id="truncateLength" min="1" value="50">
   </div>
 
   <button id="saveBtn">Save Preferences</button>
