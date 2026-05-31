@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube Timestamped Bookmarks",
-  "version": "1.2.1",
+  "version": "1.3",
   "description": "Bookmarks the current YouTube video with a timestamp.",
   "permissions": [
     "bookmarks",

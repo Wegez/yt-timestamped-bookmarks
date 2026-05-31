@@ -3,24 +3,31 @@
 <head>
   <meta charset="utf-8">
   <style>
-    body { font-family: system-ui, sans-serif; color: black; background: white; padding: 15px; width: 320px; box-sizing: border-box; margin: 0; }
-    h3 { margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid black; padding-bottom: 5px; }
-    .setting-group { margin-bottom: 18px; }
-    label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 0.95em; }
-    .checkbox-label { font-weight: normal; display: flex; align-items: center; gap: 8px; cursor: pointer; }
-    input[type="text"], input[type="number"], select { width: 100%; padding: 6px; box-sizing: border-box; border: 1px solid black; }
-    button { background: white; color: black; border: 2px solid black; padding: 8px 15px; cursor: pointer; font-weight: bold; width: 100%; }
+    /* Compact styling: reduced padding, font sizes, and margins */
+    body { font-family: system-ui, sans-serif; color: black; background: white; padding: 12px; width: 340px; box-sizing: border-box; margin: 0; font-size: 0.9em; }
+    h3 { margin-top: 0; margin-bottom: 12px; border-bottom: 2px solid black; padding-bottom: 4px; font-size: 1.1em; text-align: center; }
+    .setting-group { margin-bottom: 12px; }
+    label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 0.95em; }
+    .checkbox-label { font-weight: normal; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    input[type="text"], input[type="number"], select { width: 100%; padding: 4px; box-sizing: border-box; border: 1px solid black; font-size: 0.95em; }
+    button { background: white; color: black; border: 2px solid black; padding: 6px 12px; cursor: pointer; font-weight: bold; width: 100%; font-size: 0.95em; }
     button:hover { background: black; color: white; }
-    #quickBookmarkBtn { background: black; color: white; margin-bottom: 5px; }
+    #quickBookmarkBtn { background: black; color: white; margin-bottom: 4px; }
     #quickBookmarkBtn:hover { background: #333; }
-    .note { font-size: 0.8em; color: #555; margin-top: 4px; display: block; }
-    .shortcut-link { display: block; text-align: center; margin-top: 8px; font-size: 0.8em; }
+    #deleteBookmarkBtn { margin-bottom: 4px; border-color: #d9534f; color: #d9534f; }
+    #deleteBookmarkBtn:hover { background: #d9534f; color: white; }
+    .note { font-size: 0.85em; color: #555; margin-top: 2px; display: block; }
+    .shortcut-link { display: block; text-align: center; margin-top: 6px; font-size: 0.85em; }
     .shortcut-link a { color: #0055cc; text-decoration: none; }
     .shortcut-link a:hover { text-decoration: underline; }
-    #status { margin-top: 10px; font-weight: bold; height: 15px; font-size: 0.85em; text-align: center; color: green; }
-    hr { border: 0; border-top: 1px solid #ccc; margin: 15px 0; }
-    .footer-links { text-align: center; font-size: 0.8em; margin-top: 10px; }
+    #status { margin-top: 8px; font-weight: bold; height: 14px; font-size: 0.85em; text-align: center; color: green; }
+    hr { border: 0; border-top: 1px solid #ccc; margin: 12px 0; }
+    .footer-links { text-align: center; font-size: 0.85em; margin-top: 8px; }
     .footer-links a { color: black; text-decoration: underline; margin: 0 5px; }
+    
+    /* New styles for the inline delay input */
+    .inline-input { width: 60px !important; display: inline-block; text-align: center; }
+    #doubleClickSettings { margin-top: 6px; margin-left: 24px; }
   </style>
 </head>
 <body>
@@ -28,10 +35,9 @@
   
   <div class="setting-group">
     <button id="quickBookmarkBtn">Bookmark Current Time</button>
-    <span class="note" style="text-align: center;">Hotkey shortcut: <b>Alt+Shift+X</b></span>
-    <span class="shortcut-link">
-      <a href="#" id="manageShortcutsLink">Change shortcut in Add-ons manager</a>
-    </span>
+    <button id="deleteBookmarkBtn">Delete Bookmark for Video</button>
+    <span class="note" style="text-align: center;">Hotkey: <b>Alt+Shift+X</b></span>
+    <span class="shortcut-link"><a href="#" id="manageShortcutsLink">Change shortcut</a></span>
   </div>
 
   <hr>
@@ -40,8 +46,21 @@
     <label for="iconAction">Icon Click Behavior:</label>
     <select id="iconAction">
       <option value="menu">Open Options Menu (Default)</option>
-      <option value="bookmark">Create Bookmark Immediately</option>
+      <option value="bookmark">Action Mode (Create Bookmark Instantly)</option>
     </select>
+    
+    <!-- This section hides/shows dynamically based on the selection above -->
+    <div id="actionSettings" style="display: none; margin-top: 8px;">
+      <label class="checkbox-label">
+        <input type="checkbox" id="doubleClickDelete">
+        Enable double-click to delete 
+      </label>
+      <div id="doubleClickSettings" style="display: none;">
+        <span class="note">Double-click speed: 
+          <input type="number" id="doubleClickDelay" class="inline-input" min="100" max="1000" step="50" value="300"> ms
+        </span>
+      </div>
+    </div>
   </div>
 
   <div class="setting-group">
